@@ -1,0 +1,171 @@
+<%- include('header'); %>
+
+<h1>[<%= stopCode %>] <%= stopName %>駅標準時刻表 <%= stopNameEng %> Station Timetable</h1>
+<p style="font-size:large;">
+	<%= lineName %> (<%= (direction == "u") ? "上り" : "下り" %>)
+	<%= lineNameEng %> (<%= (direction == "u") ? "Upbound" : "Downbound" %>)
+</p>
+
+<% for (var dayType in summary){ %>
+
+<h2><%= (dayType == "wk") ? "平日ダイヤ Weekdays" : "土休日ダイヤ Holidays" %></h2>
+
+<% if (summary[dayType].length == 0){ %>
+<p>No trains.</p>
+<% }else{ %>
+
+<%
+	//Sort it up to byHour
+	var byHour = {};
+	for (var i = 0; i < summary[dayType].length; i++){
+		if (summary[dayType][i].trainType != "#"){
+			var hour = summary[dayType][i].depart_h;
+			if (byHour[hour] == null){
+				byHour[hour] = [];
+			}
+			//Check if mergable with the next entry
+			if (i < summary[dayType].length - 1){
+				if (summary[dayType][i].depart == summary[dayType][i+1].depart){
+					var merge = false;
+					var trainType1 = summary[dayType][i].trainType;
+					var trainType2 = summary[dayType][i+1].trainType;
+					if (typeof train_types[trainType1].derivativeOf === "undefined") var trainTypeDerivative1 = "";
+						else var trainTypeDerivative1 = train_types[trainType1].derivativeOf;
+					if (typeof train_types[trainType2].derivativeOf === "undefined") var trainTypeDerivative2 = "";
+						else var trainTypeDerivative2 = train_types[trainType2].derivativeOf;
+					if (trainType1 == trainType2){
+						merge = true;
+						var newTrainType = trainType1;
+					}else if (trainTypeDerivative1 == trainType2){
+						merge = true;
+						var newTrainType = trainType1;
+					}else if (trainTypeDerivative2 == trainType1){
+						merge = true;
+						var newTrainType = trainType2;
+					}else if (trainTypeDerivative1 == trainTypeDerivative2 && trainTypeDerivative1 != ""){
+						if (typeof train_types[trainType1].subpriority !== "undefined" && typeof train_types[trainType2].subpriority !== "undefined"){
+							if (train_types[trainType1].subpriority > train_types[trainType2].subpriority){
+								merge = true;
+								var newTrainType = trainType1;
+							}else if (train_types[trainType1].subpriority < train_types[trainType2].subpriority){
+								merge = true;
+								var newTrainType = trainType2;
+							}
+						}
+					}
+					if (merge){
+						var beginStop1 = summary[dayType][i].beginStop;
+						var beginStop2 = summary[dayType][i+1].beginStop;
+						var beginStopName1 = summary[dayType][i].beginStopName;
+						var beginStopName2 = summary[dayType][i+1].beginStopName;
+						if (beginStop1 != beginStop2){
+							if (beginStop1 < beginStop2){
+								summary[dayType][i].beginStop = beginStop1 + "/" + beginStop2;
+								summary[dayType][i].beginStopName = beginStopName1 + "/" + beginStopName2;
+							}else{
+								summary[dayType][i].beginStop = beginStop2 + "/" + beginStop1;
+								summary[dayType][i].beginStopName = beginStopName2 + "/" + beginStopName1;
+							}
+						}
+						var terminateStop1 = summary[dayType][i].terminateStop;
+						var terminateStop2 = summary[dayType][i+1].terminateStop;
+						var terminateStopName1 = summary[dayType][i].terminateStopName;
+						var terminateStopName2 = summary[dayType][i+1].terminateStopName;
+						if (terminateStop1 != terminateStop2){
+							if (terminateStop1 < terminateStop2){
+								summary[dayType][i].terminateStop = terminateStop1 + "/" + terminateStop2;
+								summary[dayType][i].terminateStopName = terminateStopName1 + "/" + terminateStopName2;
+							}else{
+								summary[dayType][i].terminateStop = terminateStop2 + "/" + terminateStop1;
+								summary[dayType][i].terminateStopName = terminateStopName2 + "/" + terminateStopName1;
+							}
+						}
+						summary[dayType][i].tripNo = summary[dayType][i].tripNo + "/" + summary[dayType][i+1].tripNo;
+						summary[dayType][i].trainType = newTrainType;
+						summary[dayType].splice(i+1,1);
+					}
+				}
+			}
+			//Push
+			byHour[hour].push(summary[dayType][i]);
+		}
+	}
+	//Calculate number of trains each hour
+	var maxTPH = 0;
+	for (var h in byHour){
+		if (byHour[h].length > maxTPH){
+			maxTPH = byHour[h].length;
+		}
+	}
+	var ten = function(num){
+		return (num < 10 ? "0" : "") + num;
+	}
+%>
+
+<table class="table">
+	<tr style="background-color: #ccc;">
+		<th style="min-width: 4.5em;"></th>
+		<% for (var i = 1; i <= maxTPH; i++){ %>
+		<th style="min-width: 4.5em;">#<%= i %></th>
+		<% } %>
+	</tr>
+	<%
+		var noOfTrains = 0;
+		var firstTrain, lastTrain;
+		for (var h in byHour){
+	%>
+	<tr>
+		<td style="background-color: #ccc;">
+			<span style="font-size: 80%;"></span>
+			<span style="font-size: 300%; line-height: 80%;"><%= h %>:</span>
+			<span style="font-size: 80%;"></span>
+		</td>
+		<% for (var i in byHour[h]){ var myTrip = byHour[h][i]; %>
+		<%
+			noOfTrains++;
+			if (firstTrain == null) firstTrain = myTrip.depart;
+			lastTrain = myTrip.depart;
+			//
+			var trainType = myTrip.trainType;
+			var trainType_name = train_types[trainType].name_short;
+			var trainType_color_bg = train_types[trainType].color.bg;
+			if (trainType == "LOC" || trainType == "LCL") trainType_color_bg = "#eee;"; //Choose a lighter grey color for local trains
+			var trainType_color_text = train_types[trainType].color.text;
+		%>
+		<td style="background-color: <%= trainType_color_bg %>; color: <%= trainType_color_text %>;">
+			<%
+				var mySize = Math.round(80 * 5.5 / (myTrip.terminateStopName).length);
+				if (mySize > 80) mySize = 80;
+			%>
+			<span style="font-size: <%= mySize %>%;"><%= myTrip.terminateStopName %></span><br/>
+			<span style="font-size: 300%; line-height: 80%;"><%= ten(myTrip.depart_m) %></span><br/>
+			<span style="font-size: 80%;"><%= trainType_name %> (<%= myTrip.track %>)</span>
+		</td>
+		<% } %>
+		<% for(var i = byHour[h].length; i < maxTPH; i++){ %><td></td><% } %>
+	</tr>
+	<% } %>
+</table>
+
+
+<%
+var toSeconds = function(str){
+	str = str.split("(").join(":").split(")").join("").split(":");
+	return (str[0] - 0) * 3600 + (str[1] - 0) * 60 + (str[2] - 0);
+}
+firstTrain$ = toSeconds(firstTrain);
+lastTrain$ = toSeconds(lastTrain);
+if (lastTrain$ < firstTrain$) lastTrain$ += 86400;
+var avgInterval_s = (lastTrain$ - firstTrain$) / (noOfTrains - 1);
+var avgInterval_m = avgInterval_s / 60;
+%>
+
+<p style="font-size:large;">
+	列車本数 No of Departures: <%= noOfTrains %> / 
+	平均間隔 Avg. Interval: <%= avgInterval_m.toFixed(2) %> 分 mins (<%= avgInterval_s.toFixed(2) %> 秒 sec)
+</p>
+
+<% } %>
+<% } %>
+	
+<%- include('footer'); %>

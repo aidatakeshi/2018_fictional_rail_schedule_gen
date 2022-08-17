@@ -1,0 +1,62 @@
+<%- include('header'); %>
+
+<h3>Overall</h3>
+<ul>
+	<li>Weekdays : <a href="/overall/wk">Station &amp; Depot Staying Summary</a></li>
+	<li>Holidays : <a href="/overall/ph">Station &amp; Depot Staying Summary</a></li>
+</ul>
+
+<h3>By Patterns</h3>
+<ul>
+<% for (var pattern in patterns){ %>
+	<li>
+		<strong><%= pattern %></strong> : 
+		<a href="/pattern/<%= pattern %>/wk">Weekdays</a> /
+		<a href="/pattern/<%= pattern %>/ph">Holidays</a> /
+		<a href="/pattern_json/<%= pattern %>">JSON</a>
+	</li>
+<% } %>
+</ul>
+
+<h3>Track Crossovers</h3>
+<ul>
+<% for (var i in crossovers){ var crossover = crossovers[i]; %>
+	<li>
+		<strong><%= crossover %></strong> : 
+		<a href="/crossover/<%= crossover %>/wk">Weekdays</a> /
+		<a href="/crossover/<%= crossover %>/ph">Holidays</a>
+	</li>
+<% } %>
+</ul>
+
+<h3>By Stations</h3>
+<ul>
+<% for (var i in stations){ var station = stations[i]; %>
+	<li>
+		<strong><%= station.stop %> (<%= station.name %>)</strong> :
+		<span>
+			By Track: 
+			<% for (var j in station.tracks){ var track = station.tracks[j]; %>
+				<a href="/station/<%= station.stop %>/track/<%= track %>">[<%= track %>]</a>
+			<% } %>
+		</span>; <span>
+			By Direction: 
+			<% for (var j in station.directions){ var d = station.directions[j]; %>
+				<a href="/station/<%= station.stop %>/direction/<%= d.direction %>">[<%= d.text %>]</a>
+			<% } %>
+		</span>
+	</li>
+<% } %>
+</ul>
+
+<h3>Database Data Update</h3>
+<ol>
+	<li><a href = "/db_update/consist_types/">Consist Types</a></li>
+	<li><a href = "/db_update/lines/">Lines</a></li>
+	<li><a href = "/db_update/stations/">Stations</a></li>
+	<li><a href = "/db_update/train_types/">Train Types</a></li>
+	<li><a href = "/db_update/trips/">Trips</a></li>
+	<li><a href = "/db_update/others/">Others</a></li>
+</ol>
+	
+<%- include('footer'); %>

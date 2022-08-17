@@ -1,0 +1,236 @@
+<%- include('header'); %>
+
+<h2>Station &amp; Depot Staying Summary - <%= (dayType == "wk") ? "Weekdays" : "Holidays" %></h2>
+
+<h3>Night-Staying Trains (&amp; First Trip) for each Station / Track</h3>
+
+<%
+var numSummary = {};
+var numTotal = {depot: 0, station: 0};
+var groups = [];
+function addToNumSummary(group, isDepot, num){
+	if (num == null) num = 1;
+	if (numSummary[group] == null){
+		numSummary[group] = {depot: 0, station: 0}
+		groups.push(group);
+	}
+	if (isDepot){
+		numSummary[group].depot += num;
+		numTotal.depot += num;
+	}else{
+		numSummary[group].station += num;
+		numTotal.station += num;
+	}
+}
+%>
+
+<table class="table">
+	<tr style="background-color: #ccc;">
+		<th>Code</th>
+		<th>Name</th>
+		<th>Track</th>
+		<th>Depart</th>
+		<th>Train Type</th>
+		<th>Group</th>
+		<th>Trip No</th>
+		<th>Run No</th>
+		<th>To</th>
+	</tr>
+	<%
+	var table = [];
+	var lastStop = "";
+	for (var i in stationSummary.stations){
+		var stop = stationSummary.stations[i];
+		for (var j in stationSummary.byStation[stop].tracks){
+			var track = stationSummary.byStation[stop].tracks[j];
+			var myTrips = global.stationSummary.byStation[stop].byTrack[track][dayType];
+			var groupFlag = {};
+			for (var n = 0; n < myTrips.length; n++){
+				var group = myTrips[n].group;
+				if (myTrips[n].pass == "" && myTrips[n].arrive == "" && myTrips[n].depart != "" && !groupFlag[group]){
+					table.push({
+						col1: (lastStop == stop) ? "." : stop,
+						col2: (lastStop == stop) ? "." : stations[stop].name,
+						col3: "["+track+"]",
+						col4: myTrips[n].depart.slice(0, -4),
+						col5: myTrips[n].trainType,
+						col6: myTrips[n].group,
+						col7: myTrips[n].tripNo,
+						col8: myTrips[n].runNo,
+						col9: myTrips[n].terminateStopName,
+					});
+					addToNumSummary(myTrips[n].group, false);
+					lastStop = stop;
+					groupFlag[group] = true;
+				}else{
+					n = myTrips.length;
+				}
+			}
+		}
+	}
+	for (var n in table){
+	%>
+	<tr>
+		<td style="background-color: #eee;"><%= table[n].col1 %></td>
+		<td style="background-color: #eee;"><%= table[n].col2 %></td>
+		<td style="background-color: #eee;"><%= table[n].col3 %></td>
+		<td><%= table[n].col4 %></td>
+		<% var trainType = table[n].col5; %>
+		<% if (trainType != "#"){ %>
+			<%
+			var trainType_name = train_types[trainType].name;
+			var trainType_color_bg = train_types[trainType].color.bg;
+			var trainType_color_text = train_types[trainType].color.text;
+			%>
+			<td style="background-color: <%= trainType_color_bg %>; color: <%= trainType_color_text %>;">
+			<strong><%= trainType_name %></strong>
+			</td>
+		<% }else{ %>
+			<td><strong>(回送)</strong></td>
+		<% } %>
+		<td><%= table[n].col6 %></td>
+		<td><%= table[n].col7 %></td>
+		<td><%= table[n].col8 %></td>
+		<td><%= table[n].col9 %></td>
+	</tr>
+	<% } %>
+</table>
+
+<h3>Night-Staying Trains (&amp; Last Trip) for each Station / Track</h3>
+
+<table class="table">
+	<tr style="background-color: #ccc;">
+		<th>Code</th>
+		<th>Name</th>
+		<th>Track</th>
+		<th>Arrive</th>
+		<th>Train Type</th>
+		<th>Group</th>
+		<th>Trip No</th>
+		<th>Run No</th>
+		<th>From</th>
+	</tr>
+	<%
+	var table = [];
+	var lastStop = "";
+	for (var i in stationSummary.stations){
+		var stop = stationSummary.stations[i];
+		for (var j in stationSummary.byStation[stop].tracks){
+			var track = stationSummary.byStation[stop].tracks[j];
+			var myTrips = global.stationSummary.byStation[stop].byTrack[track][dayType];
+			var groupFlag = {};
+			for (var n = myTrips.length - 1; n >= 0; n--){
+				var group = myTrips[n].group;
+				if (myTrips[n].pass == "" && myTrips[n].arrive != "" && myTrips[n].depart == "" && !groupFlag[group]){
+					table.push({
+						col1: (lastStop == stop) ? "." : stop,
+						col2: (lastStop == stop) ? "." : stations[stop].name,
+						col3: "["+track+"]",
+						col4: myTrips[n].arrive.slice(0, -4),
+						col5: myTrips[n].trainType,
+						col6: myTrips[n].group,
+						col7: myTrips[n].tripNo,
+						col8: myTrips[n].runNo,
+						col9: myTrips[n].beginStopName,
+					});
+					lastStop = stop;
+					groupFlag[group] = true;
+				}else{
+					n = 0;
+				}
+			}
+		}
+	}
+	for (var n in table){
+	%>
+	<tr>
+		<td style="background-color: #eee;"><%= table[n].col1 %></td>
+		<td style="background-color: #eee;"><%= table[n].col2 %></td>
+		<td style="background-color: #eee;"><%= table[n].col3 %></td>
+		<td><%= table[n].col4 %></td>
+		<% var trainType = table[n].col5; %>
+		<% if (trainType != "#"){ %>
+			<%
+			var trainType_name = train_types[trainType].name;
+			var trainType_color_bg = train_types[trainType].color.bg;
+			var trainType_color_text = train_types[trainType].color.text;
+			%>
+			<td style="background-color: <%= trainType_color_bg %>; color: <%= trainType_color_text %>;">
+			<strong><%= trainType_name %></strong>
+			</td>
+		<% }else{ %>
+			<td><strong>(回送)</strong></td>
+		<% } %>
+		<td><%= table[n].col6 %></td>
+		<td><%= table[n].col7 %></td>
+		<td><%= table[n].col8 %></td>
+		<td><%= table[n].col9 %></td>
+	</tr>
+	<% } %>
+</table>
+
+<h3>Trains Entering / Leaving Depot</h3>
+<table class="table">
+	<tr style="background-color: #ccc;">
+		<th>Code</th>
+		<th>Name</th>
+		<th>Group</th>
+		<th>Leaving Before Noon</th>
+		<th>Entering After Noon</th>
+		<th>Entering Before Noon</th>
+		<th>Leaving After Noon</th>
+	</tr>
+	<%
+	var lastDepot = "";
+	for (var i in global.depotSummary.depots){
+		var depot = global.depotSummary.depots[i];
+		for (var j in global.depotSummary.byDepot[depot].groups){
+			var group = global.depotSummary.byDepot[depot].groups[j];
+			var info = global.depotSummary.byDepot[depot].byGroup[group][dayType];
+			addToNumSummary(group, true, info.AMOut);
+	%>
+	<tr>
+		<td style="background-color: #eee;"><%= (lastDepot == depot) ? "." : depot %></td>
+		<td style="background-color: #eee;"><%= (lastDepot == depot) ? "." : stations[depot].name %></td>
+		<td style="background-color: #eee;"><%= group %></td>
+		<td><%= info.AMOut %></td>
+		<td><%= info.PMIn %></td>
+		<td><%= info.AMIn %></td>
+		<td><%= info.PMOut %></td>
+	</tr>
+	<%
+		lastDepot = depot;
+		}
+	}
+	%>
+</table>
+
+<h3>No of Trains for each Group</h3>
+<table class="table">
+	<tr style="background-color: #ccc;">
+		<th style="width: 10em;">Group</th>
+		<th style="width: 10em;">Staying in Depot</th>
+		<th style="width: 10em;">Staying in Station</th>
+		<th style="width: 10em;">Total</th>
+	</tr>
+	<%
+	groups.sort();
+	for (var i in groups){
+		var group = groups[i];
+	%>
+	<tr>
+		<td style="background-color: #eee;"><%= group %></td>
+		<td><%= numSummary[group].depot %></td>
+		<td><%= numSummary[group].station %></td>
+		<td style="background-color: #eee;"><%= numSummary[group].depot + numSummary[group].station %></td>
+	</tr>
+	<% } %>
+	<tr style="background-color: #ccc;">
+		<th style="width: 10em;">Total</th>
+		<th style="width: 10em;"><%= numTotal.depot %></th>
+		<th style="width: 10em;"><%= numTotal.station %></th>
+		<th style="width: 10em;"><%= numTotal.depot + numTotal.station %></th>
+	</tr>
+</table>
+	
+<%- include('footer'); %>

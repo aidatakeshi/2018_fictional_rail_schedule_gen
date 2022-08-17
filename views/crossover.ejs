@@ -1,0 +1,52 @@
+<%- include('header'); %>
+
+<h3>Summary for Crossover <%= cross %></h3>
+<p><%= (isPH == "ph") ? "Saturdays &nbsp; Public Holidays" : "Weekdays (Monday - Friday)" %></p>
+
+<table class="table">
+	<tr style="background-color: #ccc;">
+		<th>#</th>
+		<th>Occupy Start</th>
+		<th>/</th>
+		<th>Occupy End</th>
+		<th>Train Type</th>
+		<th>Trip No</th>
+		<th>Run No</th>
+		<th>From</th>
+		<th>/</th>
+		<th>To</th>
+		<th>Time Gap</th>
+	</tr>
+	<% for (var i in summary){ %>
+		<tr>
+			<td style="background-color: #ccc;">#<%= parseInt(i)+1 %></td>
+			<td><%= summary[i].start %></td>
+			<td>~</td>
+			<td><%= summary[i].end %></td>
+			<%
+				var trainType = summary[i].trainType;
+				var upbound = summary[i].upbound;
+			%>
+			<% if (trainType != "#"){ %>
+				<%
+				var trainType_name = train_types[trainType].name;
+				var trainType_color_bg = train_types[trainType].color_bg;
+				var trainType_color_text = train_types[trainType].color_text;
+				%>
+				<td style="background-color: <%= trainType_color_bg %>; color: <%= trainType_color_text %>;">
+				<strong><%= trainType_name %></strong>
+				</td>
+			<% }else{ %>
+				<td><strong>(回送)</strong></td>
+			<% } %>
+			<td><%= summary[i].tripNo %></td>
+			<td><%= summary[i].runNo %></td>
+			<td><%= upbound ? summary[i].beginStopName : summary[i].terminateStopName %></td>
+			<td><%= upbound ? "→" : "←" %></td>
+			<td><%= upbound ? summary[i].terminateStopName : summary[i].beginStopName %></td>
+			<td><%= summary[i].timeGap %></td>
+		</tr>
+	<% } %>
+</table>
+	
+<%- include('footer'); %>

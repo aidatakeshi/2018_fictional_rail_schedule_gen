@@ -1,0 +1,62 @@
+<%- include('header'); %>
+
+<h3>Summary for Station <%= stop %> (<%= stopName %>) - Track <%= track %></h3>
+
+<% for (var dayType in summary){ %>
+
+<h4><%= (dayType == "wk") ? "Weekdays" : "Holidays" %></h4>
+
+<% if (summary[dayType].length == 0){ %>
+<p>No trains move on this track on this day.</p>
+<% }else{ %>
+
+<table class="table">
+	<tr style="background-color: #ccc;">
+		<th>#</th>
+		<th>Arrive</th>
+		<th>Depart</th>
+		<th>Pass</th>
+		<th>Train Type</th>
+		<th>Group</th>
+		<th>Trip No</th>
+		<th>Run No</th>
+		<th>From</th>
+		<th>/</th>
+		<th>To</th>
+	</tr>
+	<% for (var i in summary[dayType]){ %>
+		<tr>
+			<td style="background-color: #ccc;">#<%= parseInt(i)+1 %></td>
+			<td><%= summary[dayType][i].arrive %></td>
+			<td><strong><%= summary[dayType][i].depart %></strong></td>
+			<td><em><%= summary[dayType][i].pass %></em></td>
+			<%
+				var trainType = summary[dayType][i].trainType;
+				var upbound = summary[dayType][i].upbound;
+			%>
+			<% if (trainType != "#"){ %>
+				<%
+				var trainType_name = train_types[trainType].name;
+				var trainType_color_bg = train_types[trainType].color.bg;
+				var trainType_color_text = train_types[trainType].color.text;
+				%>
+				<td style="background-color: <%= trainType_color_bg %>; color: <%= trainType_color_text %>;">
+				<strong><%= trainType_name %></strong>
+				</td>
+			<% }else{ %>
+				<td><strong>(回送)</strong></td>
+			<% } %>
+			<td><%= summary[dayType][i].group %></td>
+			<td><%= summary[dayType][i].tripNo %></td>
+			<td><%= summary[dayType][i].runNo %></td>
+			<td><%= upbound ? summary[dayType][i].beginStopName : summary[dayType][i].terminateStopName %></td>
+			<td><%= upbound ? "→" : "←" %></td>
+			<td><%= upbound ? summary[dayType][i].terminateStopName : summary[dayType][i].beginStopName %></td>
+		</tr>
+	<% } %>
+</table>
+
+<% } %>
+<% } %>
+	
+<%- include('footer'); %>
